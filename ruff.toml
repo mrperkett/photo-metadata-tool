@@ -1,0 +1,13 @@
+line-length = 100
+target-version = "py311"
+output-format = "concise"
+
+[lint]
+select = ["B", "E", "F", "I", "W"]
+ignore = ["E203", "E701"]
+# Disable fix for unused imports (`F401`).
+unfixable = ["B", "F401"]
+
+[lint.isort]
+# switch to multi-line output when available
+force-single-line = true

@@ -1,0 +1,24 @@
+[project]
+name = "seqpix"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Matthew Perkett", email = "matt.perkett@gmail.com" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "exif>=1.6.1",
+    "pandas>=2.3.2",
+    "piexif>=1.1.3",
+    "pillow>=11.3.0",
+    "streamlit>=1.49.1",
+    "streamlit-file-browser>=3.2.22",
+]
+
+[project.scripts]
+seqpix = "seqpix:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
