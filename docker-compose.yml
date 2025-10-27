@@ -1,0 +1,16 @@
+services:
+  photo-metadata-tool:
+    image: ghcr.io/mrperkett/photo-metadata-tool
+    ports:
+      - "${PORT}:${PORT}"
+    environment:
+      - PORT=${PORT}
+      - USER_OS=${USER_OS}
+      - USER_MOUNT_PATH=${USER_MOUNT_PATH}
+      - INTERNAL_USER_MOUNT_PATH=${INTERNAL_USER_MOUNT_PATH}
+      - INTERNAL_MOUNT_PATH=${INTERNAL_MOUNT_PATH}
+    volumes:
+      - "${INTERNAL_USER_MOUNT_PATH}:${INTERNAL_MOUNT_PATH}"
+    stdin_open: true   # equivalent of -it
+    tty: true
+    restart: "no"      # equivalent of --rm (don’t restart on exit)

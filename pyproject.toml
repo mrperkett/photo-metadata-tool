@@ -22,3 +22,8 @@ seqpix = "seqpix:main"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "tomli>=2.2.1",
+]

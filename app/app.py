@@ -73,7 +73,7 @@ def get_internal_image_dir(
         relative_path = user_image_dir.relative_to(user_mount_path)
 
         # full directory path (internal OS)
-        internal_image_dir = internal_mount_path / internal_path_cls(str(relative_path))
+        internal_image_dir = internal_mount_path / internal_path_cls(*relative_path.parts)
     except ValueError as e:
         raise ValueError(
             f"Image Directory ('{user_image_dir}') is not a subdirectory of user_mount_path"
@@ -112,6 +112,9 @@ def generate_dfs():
     df_current["file_name"] = df_current.apply(lambda row: Path(row["path"]).name, axis=1)
     df_current["file_size_megabytes"] = df_current["file_size_bytes"] / (1024 * 1024.0)
     df_current = df_current.rename(columns={"path": "file_path"})
+
+    # NOTE: pyarrow will complain with a non-serializable Path column.  Convert to str.
+    df_current[["file_path", "file_name"]] = df_current[["file_path", "file_name"]].astype("string")
 
     columns = [
         "file_path",
@@ -192,6 +195,8 @@ def display_dfs():
     st.markdown("## Preview of Target Image Info")
     if st.session_state.df_current.equals(st.session_state.df_target):
         st.markdown("✅ Target matches current image info")
+    else:
+        st.markdown("⚠️ Metadata Update needs to be run for changes to be applied")
     st.dataframe(st.session_state.df_target, column_config=column_config)
 
 
@@ -228,6 +233,13 @@ def set_session_state_defaults():
     st.session_state.setdefault("allow_run", False)
 
 
+def invalidate_preview():
+    st.session_state.display_image_info = False
+    st.session_state.df_orig = None
+    st.session_state.df_new = None
+    st.session_state.allow_run = False
+
+
 def display_user_input_fields():
     st.title("Photo Metadata Tool")
     with st.expander("Usage", expanded=False):
@@ -248,6 +260,7 @@ def display_user_input_fields():
         value=st.session_state.USER_MOUNT_PATH,
         help="Copy and paste the full path to the directory containing the photos to be modified."
         "⚠️ Note that the beginning of this path must match *Mounted Base Directory*",
+        on_change=invalidate_preview,
     )
 
     # Radio buttons for sort order
@@ -258,6 +271,7 @@ def display_user_input_fields():
         index=0,
         help="Select how images will be ordered before sequentially updating their"
         " *Date Time Original* metadata",
+        on_change=invalidate_preview,
     )
 
     # Start date / time
@@ -267,7 +281,10 @@ def display_user_input_fields():
         st.session_state.input_start_date = st.date_input(
             "Start Date",
             value=date(year=1986, month=1, day=1),
+            min_value=date(year=1900, month=1, day=1),
+            max_value=date(year=2099, month=12, day=31),
             help="Set the new *Date Taken* value for the first image in the sequence",
+            on_change=invalidate_preview,
         )
     with col2:
         st.session_state.input_start_time = st.time_input(
@@ -275,17 +292,26 @@ def display_user_input_fields():
             value=time(hour=0, minute=0, second=0, microsecond=0),
             step=timedelta(minutes=15),
             help="Set the new *Date Taken* value for the first image in the sequence",
+            on_change=invalidate_preview,
         )
 
     st.markdown("#### Select the time interval between images")
     col1, col2 = st.columns(2)
     with col1:
         st.session_state.input_time_step = st.number_input(
-            "Time step", value=1, min_value=1, step=1, help="time step between images"
+            "Time step",
+            value=1,
+            min_value=1,
+            step=1,
+            help="time step between images",
+            on_change=invalidate_preview,
         )
     with col2:
         st.session_state.input_time_step_units = st.selectbox(
-            "Units", options=["seconds", "minutes", "hours", "days"], index=0
+            "Units",
+            options=["seconds", "minutes", "hours", "days"],
+            index=0,
+            on_change=invalidate_preview,
         )
 
     # Checkbox for whether to overwrite the original file
